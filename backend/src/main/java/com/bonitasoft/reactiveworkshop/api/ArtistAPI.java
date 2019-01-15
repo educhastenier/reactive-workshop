@@ -59,7 +59,8 @@ public class ArtistAPI {
 
     @GetMapping(path = "/genre/{genre}/comments/stream", produces = MediaType.APPLICATION_STREAM_JSON_VALUE)
     public Flux<ArtistWithComment> getStreamOfCommentAndArtistByGenre(@PathVariable String genre) throws NotFoundException {
-        final Flux<ArtistWithComment> flux = reactiveClient
+
+        return reactiveClient
                 .get()
                 .uri("/comments/stream")
                 .retrieve()
@@ -77,9 +78,5 @@ public class ArtistAPI {
                             .userName(comment.getUserName())
                             .build();
                 });
-
-        // TODO: filter by artist genre
-
-        return flux;
     }
 }
