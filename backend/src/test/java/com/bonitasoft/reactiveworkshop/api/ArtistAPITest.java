@@ -17,6 +17,7 @@ import org.springframework.test.web.reactive.server.FluxExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.bonitasoft.reactiveworkshop.domain.Artist;
+import com.bonitasoft.reactiveworkshop.domain.ArtistWithComment;
 import com.bonitasoft.reactiveworkshop.domain.ArtistWithComments;
 import com.bonitasoft.reactiveworkshop.domain.Comment;
 import com.bonitasoft.reactiveworkshop.exception.NotFoundException;
@@ -72,25 +73,27 @@ public class ArtistAPITest {
     }
 
     @Test
-    public void getStreamOfCommentAndArtistByGenre_should_return_the_proper_results() throws Exception {
+    public void getStreamOfCommentAndArtistByGenre_should_return_the_proper_results_for_specific_genre() throws Exception {
         // when:
         WebTestClient client = WebTestClient.bindToController(artistAPI).build();
-        FluxExchangeResult<Comment> result = client.get().uri("/genre/{genre}/comments/stream", "Pop")
+        FluxExchangeResult<ArtistWithComment> result = client.get().uri("/genre/{genre}/comments/stream", "Pop")
                 .accept(APPLICATION_STREAM_JSON)
                 .exchange()
                 .expectStatus().isOk()
-                .returnResult(Comment.class);
-        Flux<Comment> commentFlux = result.getResponseBody();
+                .returnResult(ArtistWithComment.class);
+        Flux<ArtistWithComment> commentFlux = result.getResponseBody();
 
         // arbitrarily test the first 2 results only:
         StepVerifier.create(commentFlux)
                 .consumeNextWith(c -> {
                     assertThat(c.getUserName()).isNotEmpty();
                     assertThat(c.getComment()).isNotEmpty();
+                    assertThat(c.getGenre()).isEqualTo("Pop");
                 })
                 .consumeNextWith(c -> {
                     assertThat(c.getUserName()).isNotEmpty();
                     assertThat(c.getComment()).isNotEmpty();
+                    assertThat(c.getGenre()).isEqualTo("Pop");
                 })
                 .thenCancel()
                 .verify();

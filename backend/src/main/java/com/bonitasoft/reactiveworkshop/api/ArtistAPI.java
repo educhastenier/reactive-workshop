@@ -13,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.bonitasoft.reactiveworkshop.domain.Artist;
+import com.bonitasoft.reactiveworkshop.domain.ArtistWithComment;
 import com.bonitasoft.reactiveworkshop.domain.ArtistWithComments;
 import com.bonitasoft.reactiveworkshop.domain.Comment;
 import com.bonitasoft.reactiveworkshop.exception.NotFoundException;
@@ -57,15 +58,28 @@ public class ArtistAPI {
     }
 
     @GetMapping(path = "/genre/{genre}/comments/stream", produces = MediaType.APPLICATION_STREAM_JSON_VALUE)
-    public Flux<Comment> getStreamOfCommentAndArtistByGenre(@PathVariable String genre) throws NotFoundException {
-        final Flux<Comment> commentsFlux = reactiveClient
+    public Flux<ArtistWithComment> getStreamOfCommentAndArtistByGenre(@PathVariable String genre) throws NotFoundException {
+        final Flux<ArtistWithComment> flux = reactiveClient
                 .get()
                 .uri("/comments/stream")
                 .retrieve()
-                .bodyToFlux(Comment.class);
+                .bodyToFlux(Comment.class)
+                .filter(comment -> artistRepository.findById(comment.getArtist()).orElseGet(Artist::new).getGenre().equals(genre))
+                .map(comment -> {
+                    final String id = comment.getArtist();
+                    final Artist artist = artistRepository.findById(id).orElseGet(Artist::new);
+//                    if (genre.equals(artist.getGenre())) {
+                    return ArtistWithComment.builder()
+                            .artistId(id)
+                            .artistName(artist.getName())
+                            .comment(comment.getComment())
+                            .genre(artist.getGenre())
+                            .userName(comment.getUserName())
+                            .build();
+                });
 
         // TODO: filter by artist genre
 
-        return commentsFlux;
+        return flux;
     }
 }

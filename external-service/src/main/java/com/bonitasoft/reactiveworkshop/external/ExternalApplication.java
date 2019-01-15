@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+
 import reactor.core.publisher.Flux;
 
 @SpringBootApplication
@@ -34,7 +35,7 @@ public class ExternalApplication {
     }
     @GetMapping(path = "/comments/stream", produces = MediaType.APPLICATION_STREAM_JSON_VALUE)
     Flux<Comment> getStreamOfComment() {
-        return commentGenerator.generateComment().repeat().delayElements(Duration.ofSeconds(1));
+        return commentGenerator.generateComment().repeat().delayElements(Duration.ofMillis(50));
     }
     @GetMapping("/comments/last10")
     Flux<Comment> findLast10Comments() {

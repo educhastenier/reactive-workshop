@@ -20,7 +20,7 @@ public class Artist {
     @Id
     private String id;
     private String name;
-    private String genre;
+    private String genre = "";
 
 
 }
