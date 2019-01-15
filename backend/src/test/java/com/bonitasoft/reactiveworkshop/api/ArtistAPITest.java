@@ -2,6 +2,7 @@ package com.bonitasoft.reactiveworkshop.api;
 
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.MediaType.APPLICATION_STREAM_JSON;
 
 import java.util.List;
 
@@ -12,11 +13,16 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.reactive.server.FluxExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.bonitasoft.reactiveworkshop.domain.Artist;
 import com.bonitasoft.reactiveworkshop.domain.ArtistWithComments;
 import com.bonitasoft.reactiveworkshop.domain.Comment;
 import com.bonitasoft.reactiveworkshop.exception.NotFoundException;
+
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 /**
  * @author Emmanuel Duchastenier
@@ -63,5 +69,30 @@ public class ArtistAPITest {
             assertThat(c.getUserName()).isNotEmpty();
             assertThat(c.getComment()).isNotEmpty();
         });
+    }
+
+    @Test
+    public void getStreamOfCommentAndArtistByGenre_should_return_the_proper_results() throws Exception {
+        // when:
+        WebTestClient client = WebTestClient.bindToController(artistAPI).build();
+        FluxExchangeResult<Comment> result = client.get().uri("/genre/{genre}/comments/stream", "Pop")
+                .accept(APPLICATION_STREAM_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .returnResult(Comment.class);
+        Flux<Comment> commentFlux = result.getResponseBody();
+
+        // arbitrarily test the first 2 results only:
+        StepVerifier.create(commentFlux)
+                .consumeNextWith(c -> {
+                    assertThat(c.getUserName()).isNotEmpty();
+                    assertThat(c.getComment()).isNotEmpty();
+                })
+                .consumeNextWith(c -> {
+                    assertThat(c.getUserName()).isNotEmpty();
+                    assertThat(c.getComment()).isNotEmpty();
+                })
+                .thenCancel()
+                .verify();
     }
 }
