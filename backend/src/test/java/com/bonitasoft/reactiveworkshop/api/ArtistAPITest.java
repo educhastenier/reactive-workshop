@@ -1,6 +1,9 @@
 package com.bonitasoft.reactiveworkshop.api;
 
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -11,6 +14,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.bonitasoft.reactiveworkshop.domain.Artist;
+import com.bonitasoft.reactiveworkshop.domain.ArtistWithComments;
+import com.bonitasoft.reactiveworkshop.domain.Comment;
 import com.bonitasoft.reactiveworkshop.exception.NotFoundException;
 
 /**
@@ -41,6 +46,22 @@ public class ArtistAPITest {
         expectedException.expect(NotFoundException.class);
 
         // when:
-        artistAPI.findById("a5c59c0315098aaaaaaa0f7fb9b1");
+        artistAPI.findById("__q645qs88df354q354354dfg354sdf__"); // This id does not exist
+    }
+
+    @Test
+    public void findLast10ArtistComments_should_return_the_first_10_comments_of_the_right_artist() throws Exception {
+        // when:
+        final ArtistWithComments details = artistAPI.findLast10ArtistComments("a5c59c0315098e6d67bb57610f7fb9b1");
+
+        // then:
+        assertThat(details.getArtistName()).isEqualTo("Adele");
+        assertThat(details.getGenre()).isEqualTo("Pop");
+        final List<Comment> comments = details.getComments();
+        comments.forEach(c -> {
+            System.out.println(format("%s: '%s'", c.getUserName(), c.getComment()));
+            assertThat(c.getUserName()).isNotEmpty();
+            assertThat(c.getComment()).isNotEmpty();
+        });
     }
 }
